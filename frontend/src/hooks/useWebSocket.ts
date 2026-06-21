@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client, IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 
 const WS_URL = '/ws';
 
@@ -10,11 +9,14 @@ let refCount = 0;
 function getOrCreateClient(): Client {
   if (!sharedClient) {
     sharedClient = new Client({
-      webSocketFactory: () => new SockJS(WS_URL) as unknown as WebSocket,
+      brokerURL: `ws://${window.location.host}${WS_URL}`,
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
     });
+    sharedClient.onStompError = (frame) => {
+      console.warn('STOMP error:', frame.headers['message']);
+    };
     sharedClient.activate();
   }
   refCount++;
