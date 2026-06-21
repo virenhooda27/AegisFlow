@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workflowApi } from '../api/workflows';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Play } from 'lucide-react';
+import { runApi } from '../api/runs';
 import type { WorkflowResponse } from '../types/workflow';
 
 export default function WorkflowList() {
@@ -16,6 +17,11 @@ export default function WorkflowList() {
   const deleteMutation = useMutation({
     mutationFn: workflowApi.delete,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflows'] }),
+  });
+
+  const runMutation = useMutation({
+    mutationFn: runApi.start,
+    onSuccess: (run) => navigate(`/runs/${run.id}`),
   });
 
   const handleDelete = (id: string, name: string) => {
@@ -91,6 +97,13 @@ export default function WorkflowList() {
                     {new Date(wf.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <button
+                      onClick={() => runMutation.mutate(wf.id)}
+                      className="inline-flex items-center p-1.5 text-gray-400 hover:text-green-600 transition-colors"
+                      title="Run"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => navigate(`/workflows/${wf.id}/edit`)}
                       className="inline-flex items-center p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"

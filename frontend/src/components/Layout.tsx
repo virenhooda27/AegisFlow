@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Workflow, LayoutDashboard } from 'lucide-react';
+import { Workflow, LayoutDashboard, Play, Server } from 'lucide-react';
 
 export default function Layout() {
   return (
@@ -35,9 +35,31 @@ export default function Layout() {
             <Workflow className="w-4 h-4" />
             Workflows
           </NavLink>
+          <NavLink
+            to="/runs"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-sidebar-hover text-white' : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
+              }`
+            }
+          >
+            <Play className="w-4 h-4" />
+            Runs
+          </NavLink>
+          <NavLink
+            to="/workers"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-sidebar-hover text-white' : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
+              }`
+            }
+          >
+            <Server className="w-4 h-4" />
+            Workers
+          </NavLink>
         </nav>
         <div className="p-4 border-t border-sidebar-hover text-xs text-indigo-300">
-          v0.1.0 &middot; Phase 1
+          v0.2.0 &middot; Phase 2
         </div>
       </aside>
       <main className="flex-1 overflow-auto bg-gray-50">
