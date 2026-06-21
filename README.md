@@ -6,6 +6,25 @@ Think **GitHub Actions / Airflow / Temporal** — but with a visual editor, AI a
 
 ---
 
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.jpeg)
+
+### Workflow List
+![Workflows](docs/screenshots/workflows.jpeg)
+
+### Visual DAG Editor
+![Editor](docs/screenshots/editor.jpeg)
+
+### Workflow Runs
+![Runs](docs/screenshots/runs.jpeg)
+
+### Worker Dashboard
+![Workers](docs/screenshots/workers.jpeg)
+
+---
+
 ## What It Does
 
 ### The Core Loop
