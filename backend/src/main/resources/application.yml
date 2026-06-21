@@ -37,6 +37,10 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
 
+aegisflow:
+  llm:
+    provider: mock
+
 management:
   endpoints:
     web:
