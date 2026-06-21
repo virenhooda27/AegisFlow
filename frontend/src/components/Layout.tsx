@@ -1,7 +1,10 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Workflow, LayoutDashboard, Play, Server } from 'lucide-react';
+import { Workflow, LayoutDashboard, Play, Server, Wifi, WifiOff } from 'lucide-react';
+import { useConnectionStatus } from '../hooks/useWebSocket';
 
 export default function Layout() {
+  const wsConnected = useConnectionStatus();
+
   return (
     <div className="flex h-screen overflow-hidden">
       <aside className="w-64 bg-sidebar text-white flex flex-col shrink-0">
@@ -58,8 +61,15 @@ export default function Layout() {
             Workers
           </NavLink>
         </nav>
-        <div className="p-4 border-t border-sidebar-hover text-xs text-indigo-300">
-          v0.2.0 &middot; Phase 2
+        <div className="p-4 border-t border-sidebar-hover text-xs text-indigo-300 space-y-1">
+          <div className="flex items-center gap-1.5">
+            {wsConnected ? (
+              <><Wifi className="w-3 h-3 text-green-400" /> <span className="text-green-300">Live</span></>
+            ) : (
+              <><WifiOff className="w-3 h-3 text-red-400" /> <span className="text-red-300">Polling</span></>
+            )}
+          </div>
+          <div>v0.2.5 &middot; Phase 2.5</div>
         </div>
       </aside>
       <main className="flex-1 overflow-auto bg-gray-50">

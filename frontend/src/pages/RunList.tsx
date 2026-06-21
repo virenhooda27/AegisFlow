@@ -1,4 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useStompSubscription } from '../hooks/useWebSocket';
 import { useNavigate } from 'react-router-dom';
 import { runApi } from '../api/runs';
 import { STATUS_COLORS, type RunStatus } from '../types/execution';
@@ -6,11 +8,18 @@ import { Play, Clock, RefreshCw } from 'lucide-react';
 
 export default function RunList() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: runs, isLoading, refetch } = useQuery({
     queryKey: ['runs'],
     queryFn: runApi.getAll,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
+
+  const onRunUpdate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['runs'] });
+  }, [queryClient]);
+
+  useStompSubscription('/topic/runs', onRunUpdate);
 
   if (isLoading) return <div className="p-8 text-gray-500">Loading runs...</div>;
 

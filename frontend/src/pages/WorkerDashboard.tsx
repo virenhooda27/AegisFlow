@@ -1,13 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useStompSubscription } from '../hooks/useWebSocket';
 import { runApi } from '../api/runs';
 import { Server, RefreshCw, Activity } from 'lucide-react';
 
 export default function WorkerDashboard() {
+  const queryClient = useQueryClient();
   const { data: workers, isLoading, refetch } = useQuery({
     queryKey: ['workers'],
     queryFn: runApi.getWorkers,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
+
+  const onWorkerUpdate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['workers'] });
+  }, [queryClient]);
+
+  useStompSubscription('/topic/workers', onWorkerUpdate);
 
   if (isLoading) return <div className="p-8 text-gray-500">Loading workers...</div>;
 

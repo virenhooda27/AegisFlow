@@ -36,13 +36,14 @@ class OrchestrationEngineTest {
     @Mock private WorkflowEdgeRepository edgeRepository;
     @Mock private TaskExecutorRegistry executorRegistry;
     @Mock private ExecutionEventService eventService;
+    @Mock private RunNotificationService notificationService;
 
     private OrchestrationEngine engine;
 
     @BeforeEach
     void setUp() {
         engine = new OrchestrationEngine(runRepository, taskRunRepository,
-                nodeRepository, edgeRepository, executorRegistry, eventService);
+                nodeRepository, edgeRepository, executorRegistry, eventService, notificationService);
     }
 
     @Test

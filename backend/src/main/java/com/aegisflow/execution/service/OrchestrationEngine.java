@@ -36,19 +36,22 @@ public class OrchestrationEngine {
     private final WorkflowEdgeRepository edgeRepository;
     private final TaskExecutorRegistry executorRegistry;
     private final ExecutionEventService eventService;
+    private final RunNotificationService notificationService;
 
     public OrchestrationEngine(WorkflowRunRepository runRepository,
                                 TaskRunRepository taskRunRepository,
                                 WorkflowNodeRepository nodeRepository,
                                 WorkflowEdgeRepository edgeRepository,
                                 TaskExecutorRegistry executorRegistry,
-                                ExecutionEventService eventService) {
+                                ExecutionEventService eventService,
+                                RunNotificationService notificationService) {
         this.runRepository = runRepository;
         this.taskRunRepository = taskRunRepository;
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
         this.executorRegistry = executorRegistry;
         this.eventService = eventService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -102,6 +105,7 @@ public class OrchestrationEngine {
                 eventService.recordTaskEvent(run, task, "TASK_READY",
                         RunStatus.CREATED, RunStatus.READY, "All upstream tasks completed");
                 log.info("Task '{}' in run {} is READY", task.getNodeKey(), runId);
+                notificationService.notifyTaskStatusChange(runId, task);
             }
         }
 
@@ -111,6 +115,7 @@ public class OrchestrationEngine {
             run.setStartedAt(Instant.now());
             runRepository.save(run);
             eventService.recordRunEvent(run, "RUN_STARTED", RunStatus.CREATED, RunStatus.RUNNING, null);
+            notificationService.notifyRunStatusChange(run, tasks);
         }
     }
 
@@ -133,6 +138,7 @@ public class OrchestrationEngine {
         taskRunRepository.save(task);
         eventService.recordTaskEvent(run, task, "TASK_STARTED",
                 previousStatus, RunStatus.RUNNING, "Attempt " + task.getAttempt());
+        notificationService.notifyTaskStatusChange(run.getId(), task);
 
         log.info("Executing task '{}' (attempt {}) in run {}", task.getNodeKey(), task.getAttempt(), run.getId());
 
@@ -156,6 +162,7 @@ public class OrchestrationEngine {
                 taskRunRepository.save(task);
                 eventService.recordTaskEvent(run, task, "TASK_SUCCEEDED",
                         RunStatus.RUNNING, RunStatus.SUCCEEDED, null);
+                notificationService.notifyTaskStatusChange(run.getId(), task);
                 log.info("Task '{}' succeeded in run {}", task.getNodeKey(), run.getId());
             } else {
                 handleTaskFailure(run, task, result.errorMessage());
@@ -179,6 +186,7 @@ public class OrchestrationEngine {
                     RunStatus.RUNNING, RunStatus.READY,
                     "Retrying (" + task.getAttempt() + "/" + task.getMaxAttempts() + "): " + errorMessage);
             log.info("Task '{}' will retry ({}/{})", task.getNodeKey(), task.getAttempt(), task.getMaxAttempts());
+            notificationService.notifyTaskStatusChange(run.getId(), task);
         } else {
             // Final failure
             task.setStatus(RunStatus.FAILED);
@@ -189,6 +197,7 @@ public class OrchestrationEngine {
                     RunStatus.RUNNING, RunStatus.FAILED,
                     "Max attempts reached: " + errorMessage);
             log.error("Task '{}' failed after {} attempts in run {}", task.getNodeKey(), task.getAttempt(), run.getId());
+            notificationService.notifyTaskStatusChange(run.getId(), task);
         }
     }
 
@@ -202,6 +211,8 @@ public class OrchestrationEngine {
                 status == RunStatus.SUCCEEDED ? "RUN_SUCCEEDED" : "RUN_FAILED",
                 previous, status, errorMessage);
         log.info("Workflow run {} completed with status {}", run.getId(), status);
+        List<TaskRun> tasks = taskRunRepository.findByWorkflowRunId(run.getId());
+        notificationService.notifyRunStatusChange(run, tasks);
     }
 
     private Map<String, Set<String>> buildUpstreamMap(List<WorkflowEdge> edges, UUID workflowId) {

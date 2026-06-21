@@ -31,19 +31,22 @@ public class WorkflowRunService {
     private final WorkflowNodeRepository nodeRepository;
     private final OrchestrationEngine orchestrationEngine;
     private final ExecutionEventService eventService;
+    private final RunNotificationService notificationService;
 
     public WorkflowRunService(WorkflowRunRepository runRepository,
                                TaskRunRepository taskRunRepository,
                                WorkflowDefinitionRepository workflowRepository,
                                WorkflowNodeRepository nodeRepository,
                                OrchestrationEngine orchestrationEngine,
-                               ExecutionEventService eventService) {
+                               ExecutionEventService eventService,
+                               RunNotificationService notificationService) {
         this.runRepository = runRepository;
         this.taskRunRepository = taskRunRepository;
         this.workflowRepository = workflowRepository;
         this.nodeRepository = nodeRepository;
         this.orchestrationEngine = orchestrationEngine;
         this.eventService = eventService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -112,6 +115,7 @@ public class WorkflowRunService {
         runRepository.save(run);
         eventService.recordRunEvent(run, "RUN_PAUSED", previous, RunStatus.PAUSED, null);
         log.info("Paused workflow run {}", runId);
+        notificationService.notifyRunStatusChange(run, taskRunRepository.findByWorkflowRunId(runId));
         return run;
     }
 
@@ -126,6 +130,7 @@ public class WorkflowRunService {
         runRepository.save(run);
         eventService.recordRunEvent(run, "RUN_RESUMED", previous, RunStatus.RUNNING, null);
         log.info("Resumed workflow run {}", runId);
+        notificationService.notifyRunStatusChange(run, taskRunRepository.findByWorkflowRunId(runId));
         orchestrationEngine.advanceRun(runId);
         return run;
     }
@@ -142,6 +147,7 @@ public class WorkflowRunService {
         runRepository.save(run);
         eventService.recordRunEvent(run, "RUN_CANCELLED", previous, RunStatus.CANCELLED, null);
         log.info("Cancelled workflow run {}", runId);
+        notificationService.notifyRunStatusChange(run, taskRunRepository.findByWorkflowRunId(runId));
         return run;
     }
 

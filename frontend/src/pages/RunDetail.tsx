@@ -4,7 +4,9 @@ import { runApi } from '../api/runs';
 import { STATUS_COLORS, type RunStatus, type TaskRunResponse } from '../types/execution';
 import { StatusBadge } from './RunList';
 import { ArrowLeft, Pause, Play, XCircle, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useStompSubscription } from '../hooks/useWebSocket';
+import type { WorkflowRunResponse } from '../types/execution';
 
 const NODE_STATUS_COLORS: Record<RunStatus, string> = {
   CREATED: '#e5e7eb',
@@ -26,9 +28,15 @@ export default function RunDetail() {
   const { data: run, isLoading } = useQuery({
     queryKey: ['run', id],
     queryFn: () => runApi.getById(id!),
-    refetchInterval: 3000,
+    refetchInterval: 10000,
     enabled: !!id,
   });
+
+  const onRunUpdate = useCallback((data: WorkflowRunResponse) => {
+    queryClient.setQueryData(['run', id], data);
+  }, [queryClient, id]);
+
+  useStompSubscription(`/topic/runs/${id}`, onRunUpdate, !!id);
 
   const pauseMut = useMutation({
     mutationFn: () => runApi.pause(id!),
