@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { NODE_TYPES } from '../types/workflow';
 import type { Node } from '@xyflow/react';
@@ -19,14 +19,6 @@ export default function NodeConfigPanel({ node, onUpdate, onClose }: NodeConfigP
   const [configJson, setConfigJson] = useState(
     JSON.stringify(data.config || {}, null, 2)
   );
-
-  useEffect(() => {
-    const d = node.data as Record<string, unknown>;
-    setLabel((d.label as string) || '');
-    setTaskType((d.taskType as string) || 'HTTP');
-    setTimeoutSeconds(d.timeoutSeconds != null ? String(d.timeoutSeconds) : '');
-    setConfigJson(JSON.stringify(d.config || {}, null, 2));
-  }, [node.id, node.data]);
 
   const handleApply = () => {
     let config = {};

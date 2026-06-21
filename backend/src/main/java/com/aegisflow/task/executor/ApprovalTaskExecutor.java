@@ -34,11 +34,30 @@ public class ApprovalTaskExecutor implements TaskExecutor {
         UUID workflowRunId = config.containsKey("workflowRunId")
                 ? UUID.fromString(config.get("workflowRunId").toString()) : null;
 
+        // Check for existing approval first (handles retries without creating duplicates)
+        if (taskRunId != null) {
+            var existing = approvalRepository.findByTaskRunId(taskRunId);
+            if (existing.isPresent()) {
+                ApprovalRequest req = existing.get();
+                if (req.getStatus() == ApprovalStatus.APPROVED) {
+                    return TaskResult.success(Map.of(
+                            "approvalId", req.getId().toString(),
+                            "approvedBy", req.getResolvedBy() != null ? req.getResolvedBy() : "unknown"
+                    ));
+                } else if (req.getStatus() == ApprovalStatus.REJECTED) {
+                    return TaskResult.failure("Approval rejected" +
+                            (req.getResolutionNote() != null ? ": " + req.getResolutionNote() : ""));
+                }
+                // Still PENDING — signal the orchestrator to pause
+                return TaskResult.failure("APPROVAL_PENDING:" + req.getId());
+            }
+        }
+
         if (taskRunId == null || workflowRunId == null) {
             return TaskResult.failure("Approval task requires taskRunId and workflowRunId in config");
         }
 
-        // Create approval request
+        // Create new approval request
         ApprovalRequest approval = ApprovalRequest.builder()
                 .workflowRunId(workflowRunId)
                 .taskRunId(taskRunId)
@@ -48,23 +67,7 @@ public class ApprovalTaskExecutor implements TaskExecutor {
                 .build();
         approvalRepository.save(approval);
 
-        // Return failure so the task stays in a non-terminal state
-        // The task will be retried; on retry it checks if approval was granted
-        var existing = approvalRepository.findByTaskRunId(taskRunId);
-        if (existing.isPresent()) {
-            ApprovalRequest req = existing.get();
-            if (req.getStatus() == ApprovalStatus.APPROVED) {
-                return TaskResult.success(Map.of(
-                        "approvalId", req.getId().toString(),
-                        "approvedBy", req.getResolvedBy() != null ? req.getResolvedBy() : "unknown"
-                ));
-            } else if (req.getStatus() == ApprovalStatus.REJECTED) {
-                return TaskResult.failure("Approval rejected" +
-                        (req.getResolutionNote() != null ? ": " + req.getResolutionNote() : ""));
-            }
-        }
-
-        // PENDING — throw a specific exception to signal the orchestrator to pause this task
+        // Signal the orchestrator to pause this task
         return TaskResult.failure("APPROVAL_PENDING:" + approval.getId());
     }
 

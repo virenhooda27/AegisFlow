@@ -46,5 +46,5 @@ export interface ValidationResultDto {
   warnings: string[];
 }
 
-export const NODE_TYPES = ['HTTP', 'SQL', 'SHELL', 'JAVA'] as const;
+export const NODE_TYPES = ['HTTP', 'SQL', 'SHELL', 'JAVA', 'AGENT', 'APPROVAL'] as const;
 export type NodeType = (typeof NODE_TYPES)[number];

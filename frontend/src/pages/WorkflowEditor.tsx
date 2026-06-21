@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useMemo, useEffect } from 'react';
+import { useCallback, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -56,14 +56,16 @@ export default function WorkflowEditor() {
   const [validation, setValidation] = useState<ValidationResultDto | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   const { data: workflowData, isLoading } = useQuery({
     queryKey: ['workflow', id],
     queryFn: () => workflowApi.getById(id!),
     enabled: !isNew,
   });
 
-  useEffect(() => {
-    if (!workflowData) return;
+  if (workflowData && !dataLoaded) {
+    setDataLoaded(true);
     setWorkflowName(workflowData.name);
     setWorkflowDescription(workflowData.description || '');
 
@@ -84,7 +86,7 @@ export default function WorkflowEditor() {
 
     setNodes(flowNodes);
     setEdges(flowEdges);
-  }, [workflowData]);
+  }
 
   const saveMutation = useMutation({
     mutationFn: (payload: WorkflowCreateRequest) =>
@@ -278,6 +280,7 @@ export default function WorkflowEditor() {
         {/* Config panel */}
         {selectedNode && (
           <NodeConfigPanel
+            key={selectedNode.id}
             node={selectedNode}
             onUpdate={updateNodeData}
             onClose={() => setSelectedNode(null)}

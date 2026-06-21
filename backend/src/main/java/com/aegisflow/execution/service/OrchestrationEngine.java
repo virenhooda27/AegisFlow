@@ -70,7 +70,7 @@ public class OrchestrationEngine {
 
         Map<String, Set<String>> upstreamMap = buildUpstreamMap(edges, workflowId);
 
-        // Check for overall failure
+        // Check for overall failure (PAUSED tasks are NOT failures — they're awaiting approval)
         boolean anyFailed = tasks.stream()
                 .anyMatch(t -> t.getStatus() == RunStatus.FAILED);
         if (anyFailed) {
@@ -78,12 +78,19 @@ public class OrchestrationEngine {
             return;
         }
 
-        // Check for overall success
+        // Check for overall success (all must be SUCCEEDED, not just non-FAILED)
         boolean allSucceeded = tasks.stream()
                 .allMatch(t -> t.getStatus() == RunStatus.SUCCEEDED);
         if (allSucceeded) {
             completeRun(run, RunStatus.SUCCEEDED, null);
             return;
+        }
+
+        // If any tasks are paused (awaiting approval), don't mark new tasks as ready past them
+        boolean anyPaused = tasks.stream()
+                .anyMatch(t -> t.getStatus() == RunStatus.PAUSED);
+        if (anyPaused) {
+            log.debug("Run {} has paused tasks awaiting approval, not advancing further", runId);
         }
 
         // Find and mark READY tasks
@@ -145,15 +152,21 @@ public class OrchestrationEngine {
         // Execute via the appropriate executor
         try {
             TaskExecutor executor = executorRegistry.getExecutor(node.getType());
-            TaskExecutor.TaskContext context = new TaskExecutor.TaskContext(
+
+            // Inject runtime IDs into config for executors that need them (e.g. APPROVAL)
+            Map<String, Object> enrichedConfig = new HashMap<>(node.getConfig() != null ? node.getConfig() : Map.of());
+            enrichedConfig.put("taskRunId", task.getId().toString());
+            enrichedConfig.put("workflowRunId", run.getId().toString());
+
+            TaskExecutor.TaskContext context2 = new TaskExecutor.TaskContext(
                     node.getNodeKey(),
                     node.getName(),
-                    node.getConfig() != null ? node.getConfig() : Map.of(),
+                    enrichedConfig,
                     node.getTimeoutSeconds(),
                     task.getAttempt()
             );
 
-            TaskExecutor.TaskResult result = executor.execute(context);
+            TaskExecutor.TaskResult result = executor.execute(context2);
 
             if (result.success()) {
                 task.setStatus(RunStatus.SUCCEEDED);
@@ -164,6 +177,15 @@ public class OrchestrationEngine {
                         RunStatus.RUNNING, RunStatus.SUCCEEDED, null);
                 notificationService.notifyTaskStatusChange(run.getId(), task);
                 log.info("Task '{}' succeeded in run {}", task.getNodeKey(), run.getId());
+            } else if (result.errorMessage() != null && result.errorMessage().startsWith("APPROVAL_PENDING:")) {
+                // Approval task needs human intervention — pause the task
+                task.setStatus(RunStatus.PAUSED);
+                task.setErrorMessage(null);
+                taskRunRepository.save(task);
+                eventService.recordTaskEvent(run, task, "TASK_PAUSED",
+                        RunStatus.RUNNING, RunStatus.PAUSED, "Waiting for human approval");
+                notificationService.notifyTaskStatusChange(run.getId(), task);
+                log.info("Task '{}' paused for approval in run {}", task.getNodeKey(), run.getId());
             } else {
                 handleTaskFailure(run, task, result.errorMessage());
             }

@@ -12,21 +12,21 @@ export default function ApprovalQueue() {
     refetchInterval: 10000,
   });
 
-  const [actionNote, setActionNote] = useState('');
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const approveMut = useMutation({
-    mutationFn: ({ id }: { id: string }) => approvalApi.approve(id, 'user', actionNote),
-    onSuccess: () => {
+    mutationFn: ({ id }: { id: string }) => approvalApi.approve(id, 'user', notes[id] || ''),
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
-      setActionNote('');
+      setNotes((prev) => { const next = { ...prev }; delete next[id]; return next; });
     },
   });
 
   const rejectMut = useMutation({
-    mutationFn: ({ id }: { id: string }) => approvalApi.reject(id, 'user', actionNote),
-    onSuccess: () => {
+    mutationFn: ({ id }: { id: string }) => approvalApi.reject(id, 'user', notes[id] || ''),
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
-      setActionNote('');
+      setNotes((prev) => { const next = { ...prev }; delete next[id]; return next; });
     },
   });
 
@@ -79,8 +79,8 @@ export default function ApprovalQueue() {
                 <input
                   type="text"
                   placeholder="Note (optional)"
-                  value={actionNote}
-                  onChange={(e) => setActionNote(e.target.value)}
+                  value={notes[approval.id] || ''}
+                  onChange={(e) => setNotes((prev) => ({ ...prev, [approval.id]: e.target.value }))}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 />
                 <button

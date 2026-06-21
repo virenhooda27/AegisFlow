@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { runApi } from '../api/runs';
-import { STATUS_COLORS, type RunStatus, type TaskRunResponse } from '../types/execution';
+import { type RunStatus, type TaskRunResponse } from '../types/execution';
 import { StatusBadge } from './RunList';
 import { ArrowLeft, Pause, Play, XCircle, RotateCcw, History } from 'lucide-react';
 import { useState, useCallback } from 'react';

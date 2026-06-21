@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Client, IMessage } from '@stomp/stompjs';
 
 const WS_URL = '/ws';
@@ -39,9 +39,9 @@ export function useStompSubscription<T>(
 ) {
   const clientRef = useRef<Client | null>(null);
   const callbackRef = useRef(onMessage);
-  callbackRef.current = onMessage;
 
   useEffect(() => {
+    callbackRef.current = onMessage;
     if (!enabled) return;
 
     const client = getOrCreateClient();
@@ -74,6 +74,7 @@ export function useStompSubscription<T>(
       sub?.unsubscribe();
       releaseClient();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topic, enabled]);
 }
 
