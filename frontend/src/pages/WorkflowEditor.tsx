@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useMemo } from 'react';
+import { useCallback, useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -56,34 +56,35 @@ export default function WorkflowEditor() {
   const [validation, setValidation] = useState<ValidationResultDto | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  const { isLoading } = useQuery({
+  const { data: workflowData, isLoading } = useQuery({
     queryKey: ['workflow', id],
     queryFn: () => workflowApi.getById(id!),
     enabled: !isNew,
-    select: (data) => {
-      setWorkflowName(data.name);
-      setWorkflowDescription(data.description || '');
-
-      const flowNodes: Node[] = data.nodes.map((n: NodeDto) => ({
-        id: n.nodeKey,
-        type: 'task',
-        position: { x: n.positionX, y: n.positionY },
-        data: { label: n.name, taskType: n.type, config: n.config || {}, timeoutSeconds: n.timeoutSeconds, retryPolicy: n.retryPolicy || {} },
-      }));
-
-      const flowEdges: Edge[] = data.edges.map((e: EdgeDto, i: number) => ({
-        id: `edge_${i}`,
-        source: e.sourceNodeKey,
-        target: e.targetNodeKey,
-        animated: true,
-        style: { stroke: '#6366f1' },
-      }));
-
-      setNodes(flowNodes);
-      setEdges(flowEdges);
-      return data;
-    },
   });
+
+  useEffect(() => {
+    if (!workflowData) return;
+    setWorkflowName(workflowData.name);
+    setWorkflowDescription(workflowData.description || '');
+
+    const flowNodes: Node[] = workflowData.nodes.map((n: NodeDto) => ({
+      id: n.nodeKey,
+      type: 'task',
+      position: { x: n.positionX, y: n.positionY },
+      data: { label: n.name, taskType: n.type, config: n.config || {}, timeoutSeconds: n.timeoutSeconds, retryPolicy: n.retryPolicy || {} },
+    }));
+
+    const flowEdges: Edge[] = workflowData.edges.map((e: EdgeDto, i: number) => ({
+      id: `edge_${i}`,
+      source: e.sourceNodeKey,
+      target: e.targetNodeKey,
+      animated: true,
+      style: { stroke: '#6366f1' },
+    }));
+
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  }, [workflowData]);
 
   const saveMutation = useMutation({
     mutationFn: (payload: WorkflowCreateRequest) =>
