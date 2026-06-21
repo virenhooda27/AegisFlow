@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { runApi } from '../api/runs';
 import { STATUS_COLORS, type RunStatus, type TaskRunResponse } from '../types/execution';
 import { StatusBadge } from './RunList';
-import { ArrowLeft, Pause, Play, XCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Pause, Play, XCircle, RotateCcw, History } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useStompSubscription } from '../hooks/useWebSocket';
 import type { WorkflowRunResponse } from '../types/execution';
@@ -104,6 +104,9 @@ export default function RunDetail() {
             <RotateCcw className="w-3.5 h-3.5" /> Retry Failed
           </button>
         )}
+        <button onClick={() => navigate(`/runs/${id}/replay`)} className="flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200 hover:bg-indigo-100">
+          <History className="w-3.5 h-3.5" /> Replay
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-6">

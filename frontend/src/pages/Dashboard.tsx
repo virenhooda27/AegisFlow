@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { workflowApi } from '../api/workflows';
 import { runApi } from '../api/runs';
-import { Workflow, CheckCircle, Play, Server } from 'lucide-react';
+import { Workflow, CheckCircle, Play, Server, ShieldCheck, Bot } from 'lucide-react';
+import { approvalApi } from '../api/approvals';
+import { agentApi } from '../api/agents';
 
 export default function Dashboard() {
   const { data: workflows, isLoading: wfLoading } = useQuery({
@@ -19,6 +21,16 @@ export default function Dashboard() {
     queryKey: ['workers'],
     queryFn: runApi.getWorkers,
     refetchInterval: 5000,
+  });
+
+  const { data: pendingApprovals } = useQuery({
+    queryKey: ['approvals'],
+    queryFn: approvalApi.getPending,
+  });
+
+  const { data: agentTypes } = useQuery({
+    queryKey: ['agent-types'],
+    queryFn: agentApi.getTypes,
   });
 
   const activeRuns = runs?.filter((r) => r.status === 'RUNNING' || r.status === 'CREATED').length ?? 0;
@@ -70,13 +82,32 @@ export default function Dashboard() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <ShieldCheck className="w-5 h-5 text-amber-600" />
+            </div>
+            <span className="text-sm font-medium text-gray-500">Pending Approvals</span>
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{pendingApprovals?.length ?? 0}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Bot className="w-5 h-5 text-purple-600" />
+            </div>
+            <span className="text-sm font-medium text-gray-500">AI Agents</span>
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{agentTypes?.length ?? 0}</p>
+          <p className="text-sm text-gray-500 mt-1">{agentTypes?.join(', ')}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-100 rounded-lg">
               <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
             <span className="text-sm font-medium text-gray-500">Phase</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">2</p>
-          <p className="text-sm text-gray-500 mt-1">Execution Engine</p>
+          <p className="text-3xl font-bold text-gray-900">3</p>
+          <p className="text-sm text-gray-500 mt-1">AI Agents + Governance</p>
         </div>
       </div>
     </div>

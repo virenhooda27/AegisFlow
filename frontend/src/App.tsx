@@ -6,6 +6,10 @@ import WorkflowEditor from './pages/WorkflowEditor';
 import RunList from './pages/RunList';
 import RunDetail from './pages/RunDetail';
 import WorkerDashboard from './pages/WorkerDashboard';
+import ApprovalQueue from './pages/ApprovalQueue';
+import AgentConsole from './pages/AgentConsole';
+import AuditLogPage from './pages/AuditLogPage';
+import ReplayViewer from './pages/ReplayViewer';
 
 export default function App() {
   return (
@@ -19,6 +23,10 @@ export default function App() {
           <Route path="runs" element={<RunList />} />
           <Route path="runs/:id" element={<RunDetail />} />
           <Route path="workers" element={<WorkerDashboard />} />
+          <Route path="approvals" element={<ApprovalQueue />} />
+          <Route path="agents" element={<AgentConsole />} />
+          <Route path="audit" element={<AuditLogPage />} />
+          <Route path="runs/:id/replay" element={<ReplayViewer />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Workflow, LayoutDashboard, Play, Server, Wifi, WifiOff } from 'lucide-react';
+import { Workflow, LayoutDashboard, Play, Server, Wifi, WifiOff, ShieldCheck, Bot, FileText } from 'lucide-react';
 import { useConnectionStatus } from '../hooks/useWebSocket';
 
 export default function Layout() {
@@ -60,6 +60,42 @@ export default function Layout() {
             <Server className="w-4 h-4" />
             Workers
           </NavLink>
+
+          <div className="mt-4 mb-2 px-3 text-xs font-semibold text-indigo-400 uppercase tracking-wider">AI & Governance</div>
+
+          <NavLink
+            to="/approvals"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-sidebar-hover text-white' : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
+              }`
+            }
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Approvals
+          </NavLink>
+          <NavLink
+            to="/agents"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-sidebar-hover text-white' : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
+              }`
+            }
+          >
+            <Bot className="w-4 h-4" />
+            Agents
+          </NavLink>
+          <NavLink
+            to="/audit"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-sidebar-hover text-white' : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
+              }`
+            }
+          >
+            <FileText className="w-4 h-4" />
+            Audit Log
+          </NavLink>
         </nav>
         <div className="p-4 border-t border-sidebar-hover text-xs text-indigo-300 space-y-1">
           <div className="flex items-center gap-1.5">
@@ -69,7 +105,7 @@ export default function Layout() {
               <><WifiOff className="w-3 h-3 text-red-400" /> <span className="text-red-300">Polling</span></>
             )}
           </div>
-          <div>v0.2.5 &middot; Phase 2.5</div>
+          <div>v0.3.0 &middot; Phase 3</div>
         </div>
       </aside>
       <main className="flex-1 overflow-auto bg-gray-50">
